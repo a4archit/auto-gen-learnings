@@ -1,9 +1,9 @@
-from autogen_agentchat.base import TaskResult
-from autogen_agentchat.conditions import TextMentionTermination, ExternalTermination
+from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.messages import TextMessage
+from autogen_agentchat.base import TaskResult
 from autogen_core import CancellationToken
 from autogen_agentchat.ui import Console
 
@@ -63,37 +63,48 @@ mime_type, mime_subtype = mime_type.split("/")
 
 
 
-def send_mail(email_content: str, email_address: str):
+def send_mail(
+        email_content: str, 
+        email_address: str, 
+        email_subject: str
+    ) -> Literal['newsletter_sent_successfully','newsletter_not_sent_due_to_some_error']:
+    
     """
     By the use of this tool agent is able to send email to the provided email address
 
     Args:
         email_content (str): content body of email, may be content of news letter
         email_address (str): email address on which newsletter/email will be sent
+        email_subject (str): subject to the email
 
     """
 
-    msg = EmailMessage()
-    msg.set_content(email_content)
-    msg['Subject'] = 'SMTP Test'
-    msg['From'] = 'help.atd@gmail.com'
-    msg['To'] = email_address
+    try: 
+        msg = EmailMessage()
+        msg.set_content(email_content)
+        msg['Subject'] = email_subject
+        msg['From'] = 'help.atd@gmail.com'
+        msg['To'] = email_address
 
-    # Read file and attach
-    with open(file_path, "rb") as f:
-        msg.add_attachment(
-            f.read(),
-            maintype=mime_type,
-            subtype=mime_subtype,
-            filename=file_path.name,
-        )
+        # Read file and attach
+        with open(file_path, "rb") as f:
+            msg.add_attachment(
+                f.read(),
+                maintype=mime_type,
+                subtype=mime_subtype,
+                filename=file_path.name,
+            )
 
 
-    with smtplib.SMTP('smtp.gmail.com', 587) as server:
-        server.starttls()
-        server.login('help.atd@gmail.com', os.getenv("GOOGLE_APP_PASSWORD"))
-        server.send_message(msg)
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login('help.atd@gmail.com', os.getenv("GOOGLE_APP_PASSWORD"))
+            server.send_message(msg)
         
+    except:
+        return "newsletter_not_sent_due_to_some_error"
+    
+    return "newsletter_sent_successfully"
 
 
 newsletter_sender_agent = AssistantAgent(
@@ -269,13 +280,13 @@ assistant = AssistantAgent(
 
 
 # Define a termination condition that stops the task if the critic approves.
-text_termination = TextMentionTermination("APPROVE")
+text_termination = TextMentionTermination("newsletter_sent_successfully") | MaxMessageTermination(15)
 
 # Create a team with the primary and critic agents.
 team = RoundRobinGroupChat(
     [assistant, newsletter_agent, newsletter_sender_agent], 
     termination_condition=text_termination,
-    max_turns=4,
+    max_turns=10,
     name="round_robin_team"
 )
 
@@ -317,7 +328,7 @@ async def main():
 
     # When running inside a script, use a async main function and call it from `asyncio.run(...)`.
     await team.reset()  # Reset the team for a new task.
-    async for message in team.run_stream(task="Write a newsletter about humanoid robots and send it on email spacegyan00@gmail.com"):  # type: ignore
+    async for message in team.run_stream(task="Write a newsletter about tesla mars mission and send it on email conceptclearhelp@gmail.com"):  # type: ignore
         if isinstance(message, TaskResult):
             print("Stop Reason:", message.stop_reason)
         else:
