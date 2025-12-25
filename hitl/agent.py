@@ -1,4 +1,5 @@
 from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination, SourceMatchTermination
+from autogen_core.memory import ListMemory, MemoryContent, MemoryMimeType
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.teams import SelectorGroupChat
 from autogen_agentchat.agents import AssistantAgent
@@ -28,7 +29,7 @@ import os
 load_dotenv()
 
 
-
+messages_memory = ListMemory(name="messages_memory")
 
 
 def run_agent_async(prompt: str, history: list) -> str:
@@ -275,10 +276,13 @@ def run_agent_async(prompt: str, history: list) -> str:
     # --------------------------------------- giant agent ----------------------------------
 
 
+    history_memory = ListMemory(memory_contents=history)
+
     assistant_agent = AssistantAgent(
         name = "assistant_agent",
         model_client = client,
         tools = [tavily],
+        # memory = ,
         max_tool_iterations=2,
         description = "This agent helps to answer general queries.",
         system_message = """
@@ -333,12 +337,27 @@ def run_agent_async(prompt: str, history: list) -> str:
     #     Creates agent INSIDE event loop.
     #     """
 
-    print(f"Going to run orchestrator:- >> {datetime.datetime.today()}")
-    response = asyncio.run(orchestrator.run(task=prompt))
+    # print(f"Going to run orchestrator:- >> {datetime.datetime.today()}")
+    # updating messge in memory
+    # for message in history:
+    #     messages_memory.add(
+    #         MemoryContent(content = message, mime_type = MemoryMimeType.TEXT)
+    #     )
+
+
+
+    response = asyncio.run(orchestrator.run(task=f"user_query: {prompt}, messages history: {history}"))
     # print("chat function called...")
     # await Console(orchestrator.run_stream(task=prompt))
-    print(f"Task response completed >> {datetime.datetime.today()}")
-    return response.messages[-1].content
+    # print(f"Task response completed >> {datetime.datetime.today()}")
+
+    # fetching message from agent response
+    ai_message = response.messages[-1].content
+
+
+    print(history_memory.content)
+
+    return ai_message
 
 
 
