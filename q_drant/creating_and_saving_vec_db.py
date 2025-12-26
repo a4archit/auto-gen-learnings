@@ -1,37 +1,69 @@
-from langchain.vectorstores import Qdrant
-from langchain.embeddings import HuggingFaceBgeEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_qdrant import Qdrant, QdrantVectorStore
+from langchain_huggingface import HuggingFaceEmbeddings
+from qdrant_client import QdrantClient
+from qdrant_client.models import VectorParams, Distance 
 
-loader = PyPDFLoader("/home/archit-elitebook/workarea/whole working/auto_gen/q_drant/archit_cv_ai_ml_15_dec.pdf")
+# -----------------------------
+# Load PDF
+# -----------------------------
+loader = PyPDFLoader(
+    "/home/archit-elitebook/Documents/Rockets.pdf"
+)
 documents = loader.load()
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=500,
-                                                   chunk_overlap=50)
+
+# -----------------------------
+# Split text
+# -----------------------------
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200
+)
 texts = text_splitter.split_documents(documents)
 
-# Load the embedding model 
-model_name = "BAAI/bge-large-en"
-model_kwargs = {'device': 'cpu'}
-encode_kwargs = {'normalize_embeddings': False}
-embeddings = HuggingFaceBgeEmbeddings(
-    model_name=model_name,
-    model_kwargs=model_kwargs,
-    encode_kwargs=encode_kwargs
+# -----------------------------
+# Embeddings
+# -----------------------------
+embeddings = HuggingFaceEmbeddings(
+    model_name="BAAI/bge-large-en",
+    model_kwargs={"device": "cpu"},
+    encode_kwargs={"normalize_embeddings": True}
 )
 
-url = "http://localhost:6333"
-qdrant = Qdrant.from_documents(
-    texts,
-    embeddings,
-    url=url,
-    prefer_grpc=False,
-    collection_name="demo_vector_db"
+print("✅ BGE embeddings loaded")
+
+# -----------------------------
+# Qdrant Client (EXPLICIT)
+# -----------------------------
+client = QdrantClient(
+    url="http://localhost:6333"
 )
 
-print("Vector DB Successfully Created!")
+
+# -----------------------------
+# CREATE COLLECTION (THIS WAS MISSING)
+# -----------------------------
+client.recreate_collection(
+    collection_name="vector_db",
+    vectors_config=VectorParams(
+        size=1024,                 # bge-large-en embedding size
+        distance=Distance.COSINE
+    )
+)
+
+print("✅ Qdrant collection created")
 
 
+# -----------------------------
+# Create Vector Store (SAFE PATH)
+# -----------------------------
+qdrant = QdrantVectorStore(
+    client=client,
+    collection_name="vector_db",
+    embedding=embeddings
+)
 
+qdrant.add_documents(texts)
 
-
-
+print("✅ Vector DB successfully created")
