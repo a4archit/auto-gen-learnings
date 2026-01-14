@@ -331,7 +331,7 @@ orchestrator = SelectorGroupChat(
 
 async def running_selector_group_chat_team() -> None:
     task = """ Write a newsletter about spacex mars mission (future goals with timelines) 
-    and send it to my collegues, their emails are conceptclearhelp@gmail.com and spacegyan00@gmail.com
+    and send it to my collegues, their emails are digvijaykhapran@gmail.com and spacegyan00@gmail.com
     """
     await Console(orchestrator.run_stream(task=task))
 

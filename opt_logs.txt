@@ -1,0 +1,4 @@
+id='85252510-3200-410d-a9f8-90fe9bfea130' source='user' models_usage=None metadata={} created_at=datetime.datetime(2025, 12, 31, 7, 52, 11, 727348, tzinfo=datetime.timezone.utc) content='how many states in india' type='TextMessage'
+id='891cb609-459e-467e-bcc2-835e2573a6ff' source='responder_agent' models_usage=RequestUsage(prompt_tokens=52, completion_tokens=31) metadata={} created_at=datetime.datetime(2025, 12, 31, 7, 52, 13, 478937, tzinfo=datetime.timezone.utc) content='India has a total of 28 states and 8 Union territories. If you have any more questions about India or anything else, feel free to ask!' type='TextMessage'
+id='30758701-d8ed-4e6a-9f6e-bafbe3871564' source='validator_agent' models_usage=RequestUsage(prompt_tokens=110, completion_tokens=3) metadata={} created_at=datetime.datetime(2025, 12, 31, 7, 52, 14, 396576, tzinfo=datetime.timezone.utc) content='APPROVE' type='TextMessage'
+Stop Reason: Text 'APPROVE' mentioned
